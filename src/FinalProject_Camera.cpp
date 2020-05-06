@@ -98,7 +98,6 @@ int main(int argc, const char *argv[]) {
 
         //cout << "#1 : LOAD IMAGE INTO BUFFER done" << endl;
 
-
         /* DETECT & CLASSIFY OBJECTS */
 
         float confThreshold = 0.2;
@@ -108,7 +107,6 @@ int main(int argc, const char *argv[]) {
                       yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis);
 
         //cout << "#2 : DETECT & CLASSIFY OBJECTS done" << endl;
-
 
         /* CROP LIDAR POINTS */
 
@@ -124,7 +122,6 @@ int main(int argc, const char *argv[]) {
         (dataBuffer.end() - 1)->lidarPoints = lidarPoints;
 
         //cout << "#3 : CROP LIDAR POINTS done" << endl;
-
 
         /* CLUSTER LIDAR POINT CLOUD */
 
@@ -142,7 +139,6 @@ int main(int argc, const char *argv[]) {
 
         //cout << "#4 : CLUSTER LIDAR POINT CLOUD done" << endl;
 
-
         // REMOVE THIS LINE BEFORE PROCEEDING WITH THE FINAL PROJECT
 //        continue; // skips directly to the next image without processing what comes beneath
 
@@ -154,7 +150,6 @@ int main(int argc, const char *argv[]) {
 
         // extract 2D keypoints from current image
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-
 
         if (detectorType.compare("SHITOMASI") == 0) {
             detKeypointsShiTomasi(keypoints, imgGray, false);
@@ -182,7 +177,6 @@ int main(int argc, const char *argv[]) {
 
         //cout << "#5 : DETECT KEYPOINTS done" << endl;
 
-
         /* EXTRACT KEYPOINT DESCRIPTORS */
 
         cv::Mat descriptors;
@@ -195,10 +189,8 @@ int main(int argc, const char *argv[]) {
 
         //cout << "#6 : EXTRACT DESCRIPTORS done" << endl;
 
-
         if (dataBuffer.size() > 1) // wait until at least two images have been processed
         {
-
             /* MATCH KEYPOINT DESCRIPTORS */
 
             vector<cv::DMatch> matches;
@@ -216,21 +208,19 @@ int main(int argc, const char *argv[]) {
 
             //cout << "#7 : MATCH KEYPOINT DESCRIPTORS done" << endl;
 
-
             /* TRACK 3D OBJECT BOUNDING BOXES */
 
             //// STUDENT ASSIGNMENT
             //// TASK FP.1 -> match list of 3D objects (vector<BoundingBox>) between current and previous frame (implement ->matchBoundingBoxes)
             map<int, int> bbBestMatches;
-            matchBoundingBoxes(matches, bbBestMatches, *(dataBuffer.end() - 2), *(dataBuffer.end() -
-                                                                                  1)); // associate bounding boxes between current and previous frame using keypoint matches
+            matchBoundingBoxes(matches, bbBestMatches, *(dataBuffer.end() - 2), *(dataBuffer.end() - 1)); 
+          
             //// EOF STUDENT ASSIGNMENT
 
             // store matches in current data frame
             (dataBuffer.end() - 1)->bbMatches = bbBestMatches;
 
             //cout << "#8 : TRACK 3D OBJECT BOUNDING BOXES done" << endl;
-
 
             /* COMPUTE TTC ON OBJECT IN FRONT */
 
@@ -269,10 +259,8 @@ int main(int argc, const char *argv[]) {
                     //// TASK FP.3 -> assign enclosed keypoint matches to bounding box (implement -> clusterKptMatchesWithROI)
                     //// TASK FP.4 -> compute time-to-collision based on camera (implement -> computeTTCCamera)
                     double TTCCamera;
-                    clusterKptMatchesWithROI(*currBB, (dataBuffer.end() - 2)->keypoints,
-                                             (dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->kptMatches);
-                    computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
-                                     currBB->kptMatches, sensorFrameRate, TTCCamera);
+                    clusterKptMatchesWithROI(*currBB, (dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->kptMatches);
+                    computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, TTCCamera);
                     //// EOF STUDENT ASSIGNMENT
 
                     bVis = true;
@@ -296,19 +284,16 @@ int main(int argc, const char *argv[]) {
 
                         string windowName = "Final Results : TTC";
                         cv::namedWindow(windowName, 4);
-                        //cv::imshow(windowName, visImg);
-                        //cv::imwrite(imgBasePath + "TTC/"+detectorType+"_"+descriptorType+"_"+imgNumber.str()+imgFileType, visImg);
-                        //cout << "Press key to continue to next frame" << endl;
-                        //cv::waitKey(0);
+                        cv::imshow(windowName, visImg);
+                        cv::imwrite(imgBasePath + "TTC/"+detectorType+"_"+descriptorType+"_"+imgNumber.str()+imgFileType, visImg);
+                        cout << "Press key to continue to next frame" << endl;
+                        cv::waitKey(0);
                     }
                     bVis = false;
-
-                } // eof TTC computation
-            } // eof loop over all BB matches
-
+                } 
+            } 
         }
-
-    } // eof loop over all images
+    } 
     cout << endl << diffCameraLiDAR << " average: " << diffCameraLiDAR/(imgEndIndex-abnormalTTCCount) << endl;
 
     return 0;
